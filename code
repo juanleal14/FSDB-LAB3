@@ -671,3 +671,8 @@ exec PKG_COSTES.RUN_TEST(20);
 --  CONSISTENT GETS (workload):3372 acc                                         
 --  CONSISTENT GETS (weighted average):337,2 acc
   
+ /*RESULTS AT 30/04/2024 17:00:50                                               
+  TIME CONSUMPTION (run): 19,55 milliseconds.                                  
+  CONSISTENT GETS (workload):1640 acc                                          
+  CONSISTENT GETS (weighted average):164 acc                                                                                                                
+  Procedimiento PL/SQL terminado correctamente. */
