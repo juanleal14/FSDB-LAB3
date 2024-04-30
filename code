@@ -1,3 +1,9 @@
+DROP INDEX index_on_score_posts;
+DROP INDEX index_on_username_lines;
+DROP INDEX index_on_barcode_posts;
+DROP INDEX index_on_product_posts;
+
+
 -- -----------------------------------
 -- - SCRIPTS DE CREACIÓN E INSERCIÓN -
 -- -----------------------------------
@@ -22,6 +28,7 @@ DROP TABLE Products CASCADE CONSTRAINTS;
 DROP TABLE Origins CASCADE CONSTRAINTS;
 DROP TABLE Varietals CASCADE CONSTRAINTS;
 
+DROP CLUSTER cluster_lines;
 
 
 -- - VALIDATION TABLES - - - - - - - -
@@ -127,7 +134,7 @@ CREATE TABLE Clients (
   voucher_exp   DATE,
   CONSTRAINT pk_ PRIMARY KEY(username),
   CONSTRAINT ck_client CHECK (email is not null or mobile is not null) 
-);
+) ;
 
 
 CREATE TABLE Posts (
@@ -145,7 +152,7 @@ CREATE TABLE Posts (
   CONSTRAINT fk_posts_references FOREIGN KEY(product,barcode) 
              REFERENCES References(product,barcode),
   CONSTRAINT D_postscore CHECK (score between 0 and 5)
-);
+) ;
 
 CREATE TABLE AnonyPosts (
   postdate   DATE,
@@ -233,7 +240,7 @@ CREATE TABLE Client_Addresses (
   CONSTRAINT pk_address PRIMARY KEY(username,town,country),
   CONSTRAINT fk_addresses_clients FOREIGN KEY(username) 
              REFERENCES Clients ON DELETE CASCADE
-);
+) ;
 
 
 CREATE TABLE Client_Cards (
@@ -245,8 +252,9 @@ CREATE TABLE Client_Cards (
   CONSTRAINT pk_cards PRIMARY KEY(cardnum),
   CONSTRAINT fk_cards_clients FOREIGN KEY(username) 
              REFERENCES Clients ON DELETE CASCADE
-);
+) ;
 
+CREATE CLUSTER cluster_lines (username VARCHAR2(30)) TABLESPACE TAB_2k;
 
 CREATE TABLE Orders_Clients (
   orderdate     DATE,
@@ -261,7 +269,7 @@ CREATE TABLE Orders_Clients (
   CONSTRAINT fk_order_address FOREIGN KEY(username,town,country) REFERENCES Client_Addresses,
   CONSTRAINT fk_order_bill FOREIGN KEY(username,bill_town,bill_country) 
                 REFERENCES Client_Addresses
-);
+) CLUSTER cluster_lines(username);
 
 CREATE TABLE Client_Lines (
   orderdate     DATE,
@@ -280,7 +288,7 @@ CREATE TABLE Client_Lines (
   CONSTRAINT fk_clientlines_references FOREIGN KEY(barcode) REFERENCES References,
   CONSTRAINT fk_lines_creditcard FOREIGN KEY(cardnum) REFERENCES Client_Cards,
   CONSTRAINT D_clientcards CHECK (UPPER(pay_type)!='CREDIT CARD' OR cardnum IS NOT NULL)
-);
+) CLUSTER cluster_lines(username);
 
 select table_name from user_tables;
 
@@ -481,7 +489,9 @@ INSERT INTO Client_Lines (orderdate, username, town, country, barcode, cardnum, 
 COMMIT;
 /
 
-
+CREATE INDEX index_on_barcode_posts ON Posts(barcode) TABLESPACE TAB_8k;
+CREATE INDEX index_on_product_posts ON Posts(product) TABLESPACE TAB_8k;
+--CREATE INDEX index_on_score_posts ON Posts(score) TABLESPACE TAB_16k;
 
 -- ----------------------------------------------------
 -- ----------------------------------------------------
@@ -551,7 +561,7 @@ select (quantity*price) as total, bill_town||'/'||bill_country as place
 
 -- STEP 5 - QUERY 3
 FOR fila in (
-select /*+ INDEX(Posts index_on_score_posts) */ * from posts where score>=4
+select  * from posts where score>=4
 ) LOOP null; END LOOP;
 
 -- STEP 6 - QUERY 5
@@ -637,17 +647,27 @@ END PKG_COSTES;
 /
 
 --EMPEZAMOS A CREAR INDICES
-CREATE INDEX index_on_barcode_posts ON Posts(barcode) TABLESPACE TAB_2k;
-CREATE INDEX index_on_product_posts ON Posts(product) TABLESPACE TAB_2k;
+--CREATE INDEX index_on_barcode_posts ON Posts(barcode) TABLESPACE TAB_2k;
+--CREATE INDEX index_on_product_posts ON Posts(product) TABLESPACE TAB_2k;
 --TIME CONSUMPTION (run): 32,2 milliseconds.
 --CONSISTENT GETS (workload):6150 acc
 --CONSISTENT GETS (weighted average):615 acc
-CREATE INDEX index_on_score_posts ON Posts(score) TABLESPACE TAB_2k;
+--CREATE INDEX index_on_score_posts ON Posts(score) TABLESPACE TAB_2k;
 --TIME CONSUMPTION (run): 36 milliseconds.
 --CONSISTENT GETS (workload):6337 acc
 --CONSISTENT GETS (weighted average):633,7 acc
-CREATE INDEX index_on_score_posts ON Posts(score) TABLESPACE TAB_16k;
+
 --TIME CONSUMPTION (run): 34,4 milliseconds.
 --CONSISTENT GETS (workload):6328 acc
 --CONSISTENT GETS (weighted average):632,8 acc
+
+--Now we create the indexed cluster
+CREATE INDEX index_on_username_lines ON CLUSTER cluster_lines TABLESPACE TAB_8k;
+
 exec PKG_COSTES.RUN_TEST(20);
+
+--RESULTS AT 30/04/2024 15:55:34           
+--  TIME CONSUMPTION (run): 24,4 milliseconds.                                 
+--  CONSISTENT GETS (workload):3372 acc                                         
+--  CONSISTENT GETS (weighted average):337,2 acc
+  
