@@ -293,6 +293,9 @@ CREATE TABLE Client_Lines (
 select table_name from user_tables;
 
 
+CREATE INDEX index_on_username_lines ON CLUSTER cluster_lines TABLESPACE TAB_8k;
+
+
 -- -----------------------------------
 -- - SCRIPTS DE INSERCIÓN DE DATOS -
 -- -----------------------------------
@@ -561,7 +564,7 @@ select (quantity*price) as total, bill_town||'/'||bill_country as place
 
 -- STEP 5 - QUERY 3
 FOR fila in (
-select  * from posts where score>=4
+select   * from posts where score>=4
 ) LOOP null; END LOOP;
 
 -- STEP 6 - QUERY 5
@@ -662,7 +665,7 @@ END PKG_COSTES;
 --CONSISTENT GETS (weighted average):632,8 acc
 
 --Now we create the indexed cluster
-CREATE INDEX index_on_username_lines ON CLUSTER cluster_lines TABLESPACE TAB_8k;
+--CREATE INDEX index_on_username_lines ON CLUSTER cluster_lines TABLESPACE TAB_8k;
 
 exec PKG_COSTES.RUN_TEST(20);
 
@@ -671,7 +674,7 @@ exec PKG_COSTES.RUN_TEST(20);
 --  CONSISTENT GETS (workload):3372 acc                                         
 --  CONSISTENT GETS (weighted average):337,2 acc
   
- /*RESULTS AT 30/04/2024 17:00:50                                               
+  /*RESULTS AT 30/04/2024 17:00:50                                               
   TIME CONSUMPTION (run): 19,55 milliseconds.                                  
   CONSISTENT GETS (workload):1640 acc                                          
   CONSISTENT GETS (weighted average):164 acc                                                                                                                
