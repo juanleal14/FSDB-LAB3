@@ -254,7 +254,7 @@ CREATE TABLE Client_Cards (
              REFERENCES Clients ON DELETE CASCADE
 ) ;
 
-CREATE CLUSTER cluster_lines (username VARCHAR2(30)) TABLESPACE TAB_2k;
+CREATE CLUSTER cluster_lines (username VARCHAR2(30)) TABLESPACE TAB_16k;
 
 CREATE TABLE Orders_Clients (
   orderdate     DATE,
